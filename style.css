@@ -67,3 +67,17 @@ html, body {
 #ui-panel input[type="range"] {
   width: 80px;
 }
+
+#ui-panel select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font: 13px monospace;
+}
+
+#ui-panel select option {
+  background: #1a1a2e;
+  color: #fff;
+}

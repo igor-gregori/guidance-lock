@@ -8,6 +8,7 @@ import { createAugmentedPN } from './guidance/augmented-pn';
 import { createSimulation, stepSimulation, getFixedDt, Simulation } from './simulation';
 import { createRenderer } from './renderer';
 import { GuidanceFn, GuidanceType } from './guidance/types';
+import { scenarios } from './scenarios';
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -23,6 +24,26 @@ let mousePos: Vec2 = vec2(canvas.width / 2, canvas.height / 4);
 canvas.addEventListener('mousemove', (e) => {
   mousePos = vec2(e.clientX, e.clientY);
 });
+
+const keys: Record<string, boolean> = {};
+window.addEventListener('keydown', (e) => {
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+    e.preventDefault();
+    keys[e.key] = true;
+  }
+});
+window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+function getKeyDir(): Vec2 {
+  let x = 0, y = 0;
+  if (keys['ArrowLeft']) x -= 1;
+  if (keys['ArrowRight']) x += 1;
+  if (keys['ArrowUp']) y -= 1;
+  if (keys['ArrowDown']) y += 1;
+  return vec2(x, y);
+}
+
+let targetMode: 'waypoints' | 'keyboard' = 'waypoints';
 
 interface AlgorithmEntry {
   type: GuidanceType;
@@ -40,20 +61,17 @@ const algorithms: AlgorithmEntry[] = [
 
 let paused = false;
 let speedMultiplier = 1;
+let currentScenario = 0;
 
 function buildSim(): Simulation {
   const w = canvas.width;
   const h = canvas.height;
+  const scenario = scenarios[currentScenario];
 
   const targetConfig: TargetConfig = {
-    pos: vec2(w * 0.3, h * 0.2),
-    speed: 200,
-    waypoints: [
-      { pos: vec2(w * 0.7, h * 0.2) },
-      { pos: vec2(w * 0.8, h * 0.5) },
-      { pos: vec2(w * 0.3, h * 0.6) },
-      { pos: vec2(w * 0.2, h * 0.2) },
-    ],
+    pos: scenario.targetStart(w, h),
+    speed: scenario.targetSpeed,
+    waypoints: scenario.waypoints(w, h),
   };
 
   const active = algorithms.filter((a) => a.enabled);
@@ -67,7 +85,9 @@ function buildSim(): Simulation {
   }));
 
   const guidanceFns = missileConfigs.map((c) => c.guidanceFn);
-  return createSimulation(missileConfigs, targetConfig, guidanceFns);
+  const sim = createSimulation(missileConfigs, targetConfig, guidanceFns);
+  sim.target.mode = targetMode;
+  return sim;
 }
 
 let sim = buildSim();
@@ -88,7 +108,7 @@ function loop(timestamp: number) {
   if (!paused) {
     accumulator += frameDt * speedMultiplier;
     while (accumulator >= fixedDt) {
-      stepSimulation(sim, mousePos);
+      stepSimulation(sim, mousePos, getKeyDir());
       accumulator -= fixedDt;
     }
   }
@@ -141,6 +161,36 @@ function createUI() {
   const algoRow = document.createElement('div');
   algoRow.className = 'controls-row';
   panel.appendChild(algoRow);
+
+  const scenarioSelect = document.createElement('select');
+  for (let i = 0; i < scenarios.length; i++) {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = scenarios[i].name;
+    scenarioSelect.appendChild(opt);
+  }
+  scenarioSelect.onchange = () => {
+    currentScenario = Number(scenarioSelect.value);
+    resetSim();
+  };
+  algoRow.appendChild(scenarioSelect);
+
+  const targetSelect = document.createElement('select');
+  const targetModes = [
+    { value: 'waypoints', label: 'Auto' },
+    { value: 'keyboard', label: '⌨ Keyboard' },
+  ];
+  for (const m of targetModes) {
+    const opt = document.createElement('option');
+    opt.value = m.value;
+    opt.textContent = m.label;
+    targetSelect.appendChild(opt);
+  }
+  targetSelect.onchange = () => {
+    targetMode = targetSelect.value as 'waypoints' | 'keyboard';
+    resetSim();
+  };
+  algoRow.appendChild(targetSelect);
 
   for (const alg of algorithms) {
     const label = document.createElement('label');

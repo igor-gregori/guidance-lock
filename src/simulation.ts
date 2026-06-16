@@ -39,10 +39,10 @@ export function createSimulation(
   };
 }
 
-export function stepSimulation(sim: Simulation, mousePos?: Vec2) {
+export function stepSimulation(sim: Simulation, mousePos?: Vec2, keyDir?: Vec2) {
   if (!sim.running) return;
 
-  updateTarget(sim.target, FIXED_DT, mousePos);
+  updateTarget(sim.target, FIXED_DT, mousePos, keyDir);
 
   for (let i = 0; i < sim.missiles.length; i++) {
     const m = sim.missiles[i];

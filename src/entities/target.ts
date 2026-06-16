@@ -1,6 +1,6 @@
 import { Vec2, vec2, add, sub, scale, normalize, distance } from '../math/vector';
 
-export type TargetMode = 'waypoints' | 'mouse';
+export type TargetMode = 'waypoints' | 'mouse' | 'keyboard';
 
 export interface Waypoint {
   pos: Vec2;
@@ -39,10 +39,17 @@ export function createTarget(config: TargetConfig): TargetState {
   };
 }
 
-export function updateTarget(target: TargetState, dt: number, mousePos?: Vec2) {
+export function updateTarget(target: TargetState, dt: number, mousePos?: Vec2, keyDir?: Vec2) {
   if (!target.alive) return;
 
-  if (target.mode === 'mouse' && mousePos) {
+  if (target.mode === 'keyboard' && keyDir) {
+    const len = Math.sqrt(keyDir.x * keyDir.x + keyDir.y * keyDir.y);
+    if (len > 0) {
+      target.vel = scale(normalize(keyDir), target.speed);
+    } else {
+      target.vel = vec2(0, 0);
+    }
+  } else if (target.mode === 'mouse' && mousePos) {
     const dir = sub(mousePos, target.pos);
     const dist = distance(mousePos, target.pos);
     if (dist > 1) {
