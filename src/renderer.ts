@@ -23,6 +23,7 @@ export function createRenderer(ctx: CanvasRenderingContext2D): Renderer {
   }
 
   function drawMissile(m: MissileState) {
+    if (!m.launched) return;
     drawTrail(m.trail, m.color);
     if (!m.alive) return;
 

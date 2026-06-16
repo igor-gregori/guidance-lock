@@ -7,6 +7,8 @@ export interface MissileState {
   speed: number;
   maxLateralAcc: number;
   alive: boolean;
+  launched: boolean;
+  launchDelay: number;
   trail: Vec2[];
   guidanceType: GuidanceType;
   color: string;
@@ -20,6 +22,7 @@ export interface MissileConfig {
   guidanceType: GuidanceType;
   color: string;
   guidanceFn: GuidanceFn;
+  launchDelay: number;
 }
 
 const MAX_TRAIL = 500;
@@ -31,6 +34,8 @@ export function createMissile(config: MissileConfig): MissileState {
     speed: config.speed,
     maxLateralAcc: config.maxLateralAcc,
     alive: true,
+    launched: config.launchDelay <= 0,
+    launchDelay: config.launchDelay,
     trail: [{ ...config.pos }],
     guidanceType: config.guidanceType,
     color: config.color,

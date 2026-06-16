@@ -48,6 +48,12 @@ export function stepSimulation(sim: Simulation, mousePos?: Vec2, keyDir?: Vec2, 
     const m = sim.missiles[i];
     if (!m.alive) continue;
 
+    if (!m.launched) {
+      m.launchDelay -= FIXED_DT;
+      if (m.launchDelay <= 0) m.launched = true;
+      continue;
+    }
+
     const input: GuidanceInput = {
       missilePos: m.pos,
       missileVel: m.vel,

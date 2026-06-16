@@ -85,13 +85,14 @@ function buildSim(): Simulation {
   };
 
   const active = algorithms.filter((a) => a.enabled);
-  const missileConfigs: MissileConfig[] = active.map((a) => ({
+  const missileConfigs: MissileConfig[] = active.map((a, i) => ({
     pos: vec2(w * 0.5, h * 0.85),
     speed: 350,
     maxLateralAcc: 800,
     guidanceType: a.type,
     color: a.color,
     guidanceFn: a.factory(),
+    launchDelay: i * 0.4,
   }));
 
   const guidanceFns = missileConfigs.map((c) => c.guidanceFn);
