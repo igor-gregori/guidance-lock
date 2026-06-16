@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+   "hello": "echo 'hello'",	  
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
