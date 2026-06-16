@@ -8,7 +8,6 @@ import { createAugmentedPN } from './guidance/augmented-pn';
 import { createSimulation, stepSimulation, getFixedDt, Simulation } from './simulation';
 import { createRenderer } from './renderer';
 import { GuidanceFn, GuidanceType } from './guidance/types';
-import { scenarios } from './scenarios';
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -61,17 +60,26 @@ const algorithms: AlgorithmEntry[] = [
 
 let paused = false;
 let speedMultiplier = 1;
-let currentScenario = 0;
+
+function randomWaypoints(w: number, h: number) {
+  const margin = 0.1;
+  const count = 4 + Math.floor(Math.random() * 4);
+  return Array.from({ length: count }, () => ({
+    pos: vec2(
+      margin * w + Math.random() * w * (1 - 2 * margin),
+      margin * h + Math.random() * h * (1 - 2 * margin),
+    ),
+  }));
+}
 
 function buildSim(): Simulation {
   const w = canvas.width;
   const h = canvas.height;
-  const scenario = scenarios[currentScenario];
 
   const targetConfig: TargetConfig = {
-    pos: scenario.targetStart(w, h),
-    speed: scenario.targetSpeed,
-    waypoints: scenario.waypoints(w, h),
+    pos: vec2(w * 0.3, h * 0.2),
+    speed: 200,
+    waypoints: randomWaypoints(w, h),
   };
 
   const active = algorithms.filter((a) => a.enabled);
@@ -161,19 +169,6 @@ function createUI() {
   const algoRow = document.createElement('div');
   algoRow.className = 'controls-row';
   panel.appendChild(algoRow);
-
-  const scenarioSelect = document.createElement('select');
-  for (let i = 0; i < scenarios.length; i++) {
-    const opt = document.createElement('option');
-    opt.value = String(i);
-    opt.textContent = scenarios[i].name;
-    scenarioSelect.appendChild(opt);
-  }
-  scenarioSelect.onchange = () => {
-    currentScenario = Number(scenarioSelect.value);
-    resetSim();
-  };
-  algoRow.appendChild(scenarioSelect);
 
   const targetSelect = document.createElement('select');
   const targetModes = [
