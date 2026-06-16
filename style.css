@@ -81,3 +81,24 @@ html, body {
   background: #1a1a2e;
   color: #fff;
 }
+
+#metrics-panel {
+  margin-top: 4px;
+}
+
+#metrics-panel table {
+  border-collapse: collapse;
+  font: 12px monospace;
+  width: 100%;
+}
+
+#metrics-panel th {
+  color: #888;
+  text-align: left;
+  padding: 2px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#metrics-panel td {
+  padding: 2px 6px;
+}

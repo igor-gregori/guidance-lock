@@ -54,16 +54,6 @@ export function createRenderer(ctx: CanvasRenderingContext2D): Renderer {
     ctx.fillStyle = '#ffffff';
     ctx.font = '14px monospace';
     ctx.fillText(`t = ${sim.time.toFixed(2)}s`, 10, 20);
-
-    if (!sim.running && sim.results.length > 0) {
-      let y = 50;
-      for (const r of sim.results) {
-        ctx.fillStyle = r.color;
-        const status = r.hit ? 'HIT' : `MISS (${r.missDistance.toFixed(1)}px)`;
-        ctx.fillText(`${r.guidanceType}: ${status} | ${r.time.toFixed(2)}s`, 10, y);
-        y += 20;
-      }
-    }
   }
 
   return {

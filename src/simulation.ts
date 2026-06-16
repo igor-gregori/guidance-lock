@@ -39,7 +39,7 @@ export function createSimulation(
   };
 }
 
-export function stepSimulation(sim: Simulation, mousePos?: Vec2, keyDir?: Vec2) {
+export function stepSimulation(sim: Simulation, mousePos?: Vec2, keyDir?: Vec2, onHit?: (pos: Vec2, color: string) => void) {
   if (!sim.running) return;
 
   updateTarget(sim.target, FIXED_DT, mousePos, keyDir);
@@ -70,6 +70,7 @@ export function stepSimulation(sim: Simulation, mousePos?: Vec2, keyDir?: Vec2) 
         totalAccUsed: m.totalAccUsed,
         color: m.color,
       });
+      if (onHit) onHit(m.pos, m.color);
     }
   }
 

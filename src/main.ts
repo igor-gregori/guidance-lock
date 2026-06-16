@@ -1,4 +1,4 @@
-import { vec2, Vec2 } from './math/vector';
+import { vec2, Vec2, distance } from './math/vector';
 import { MissileConfig } from './entities/missile';
 import { TargetConfig } from './entities/target';
 import { purePursuit } from './guidance/pure-pursuit';
@@ -8,6 +8,7 @@ import { createAugmentedPN } from './guidance/augmented-pn';
 import { createSimulation, stepSimulation, getFixedDt, Simulation } from './simulation';
 import { createRenderer } from './renderer';
 import { GuidanceFn, GuidanceType } from './guidance/types';
+import { createParticleSystem, spawnExplosion, updateParticles, drawParticles, ParticleSystem } from './particles';
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -60,6 +61,7 @@ const algorithms: AlgorithmEntry[] = [
 
 let paused = false;
 let speedMultiplier = 1;
+let particles: ParticleSystem = createParticleSystem();
 
 function randomWaypoints(w: number, h: number) {
   const margin = 0.1;
@@ -103,11 +105,16 @@ const renderer = createRenderer(ctx);
 
 function resetSim() {
   sim = buildSim();
+  particles = createParticleSystem();
 }
 
 const fixedDt = getFixedDt();
 let lastTime = 0;
 let accumulator = 0;
+
+function onHit(pos: Vec2, color: string) {
+  spawnExplosion(particles, pos, color);
+}
 
 function loop(timestamp: number) {
   const frameDt = Math.min((timestamp - lastTime) / 1000, 0.1);
@@ -116,12 +123,15 @@ function loop(timestamp: number) {
   if (!paused) {
     accumulator += frameDt * speedMultiplier;
     while (accumulator >= fixedDt) {
-      stepSimulation(sim, mousePos, getKeyDir());
+      stepSimulation(sim, mousePos, getKeyDir(), onHit);
+      updateParticles(particles, fixedDt);
       accumulator -= fixedDt;
     }
   }
 
   renderer.draw(sim);
+  drawParticles(particles, ctx);
+  updateMetrics();
   requestAnimationFrame(loop);
 }
 
@@ -129,6 +139,23 @@ requestAnimationFrame((t) => {
   lastTime = t;
   requestAnimationFrame(loop);
 });
+
+let metricsEl: HTMLElement;
+
+function updateMetrics() {
+  if (!metricsEl) return;
+  let html = '<table><tr><th>Algorithm</th><th>Status</th><th>Dist</th><th>Time</th><th>Effort</th></tr>';
+  for (const m of sim.missiles) {
+    const result = sim.results.find((r) => r.guidanceType === m.guidanceType);
+    const status = result ? (result.hit ? 'HIT' : 'MISS') : 'TRACKING';
+    const dist = result ? '—' : distance(m.pos, sim.target.pos).toFixed(0);
+    const time = result ? result.time.toFixed(2) + 's' : sim.time.toFixed(2) + 's';
+    const effort = (result ? result.totalAccUsed : m.totalAccUsed).toFixed(0);
+    html += `<tr style="color:${m.color}"><td>${m.guidanceType}</td><td>${status}</td><td>${dist}</td><td>${time}</td><td>${effort}</td></tr>`;
+  }
+  html += '</table>';
+  metricsEl.innerHTML = html;
+}
 
 function createUI() {
   const panel = document.createElement('div');
@@ -201,6 +228,10 @@ function createUI() {
     label.appendChild(document.createTextNode(` ${alg.type}`));
     algoRow.appendChild(label);
   }
+
+  metricsEl = document.createElement('div');
+  metricsEl.id = 'metrics-panel';
+  panel.appendChild(metricsEl);
 }
 
 createUI();
